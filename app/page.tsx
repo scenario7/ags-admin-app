@@ -1,101 +1,120 @@
-import Image from "next/image";
+"use client";
+
+import { Scanner } from "@yudiel/react-qr-scanner";
+import { useState } from "react";
+import { db } from "@/firebase"; // Ensure your Firebase config is correctly set up
+import { collection, getDocs, query, where, DocumentData } from "firebase/firestore";
+
+interface Metadata {
+  firstName: string;
+  lastName: string;
+  height: string;
+  weight: string;
+  age: string;
+  head: string;
+  waist: string;
+  thigh: string;
+  leg: string;
+  shoulder: string;
+  shoe: string;
+  date: string;
+}
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+  const [paymentID, setPaymentID] = useState("");
+  const [paymentStatus, setPaymentStatus] = useState<string | null>(null);
+  const [metadata, setMetadata] = useState<Metadata | null>(null);
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+  const checkPaymentStatus = async (id: string) => {
+    try {
+      const customersRef = collection(db, "customers");
+      const customersSnapshot = await getDocs(customersRef);
+
+      let paymentFound = false;
+
+      for (const customerDoc of customersSnapshot.docs) {
+        const customerID = customerDoc.id;
+        const paymentsRef = collection(db, `customers/${customerID}/payments`);
+        const paymentQuery = query(paymentsRef, where("__name__", "==", id));
+
+        const paymentSnapshot = await getDocs(paymentQuery);
+        if (!paymentSnapshot.empty) {
+          const paymentData = paymentSnapshot.docs[0].data() as DocumentData;
+
+          if (paymentData.status === "succeeded") {
+            setPaymentStatus("succeeded");
+            setMetadata(paymentData.metadata as Metadata);
+          } else {
+            setPaymentStatus("failed");
+            setMetadata(null);
+          }
+          paymentFound = true;
+          break;
+        }
+      }
+
+      if (!paymentFound) {
+        setPaymentStatus("not_found");
+        setMetadata(null);
+      }
+    } catch (error) {
+      console.error("Error checking payment status:", error);
+      setPaymentStatus("error");
+      setMetadata(null);
+    }
+  };
+
+  return (
+    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-800 p-4">
+      <div className="h-52 w-52">
+        {/* QR Scanner */}
+        <Scanner
+          onScan={(result) => {
+            const scannedID = result[0].rawValue;
+            setPaymentID(scannedID);
+            checkPaymentStatus(scannedID);
+          }}
+          onError={(err) => console.error("Scanner Error:", err)}
+        />
+      </div>
+
+      {/* Display Payment ID */}
+      <h1 className="text-white mt-4">Payment ID: {paymentID || "Scanning..."}</h1>
+
+      {/* Display Payment Status */}
+      {paymentStatus && (
+        <div className="mt-6">
+          {paymentStatus === "succeeded" && (
+            <div className="text-green-500 text-lg flex flex-col items-center">
+              <span>✅ Payment Succeeded</span>
+                <div className="bg-gray-700 text-white p-4 mt-4 rounded-lg">
+                  <h2 className="text-lg font-bold mb-2">Metadata:</h2>
+                  <p>First Name: {metadata?.firstName}</p>
+                  <p>Last Name: {metadata?.lastName}</p>
+                  <p>Height: {metadata?.height}</p>
+                  <p>Weight: {metadata?.weight}</p>
+                  <p>Age: {metadata?.age}</p>
+                  <p>Head Circumference: {metadata?.head}</p>
+                  <p>Waist Circumference: {metadata?.waist}</p>
+                  <p>Thigh Circumference: {metadata?.thigh}</p>
+                  <p>Leg Length: {metadata?.leg}</p>
+                  <p>Shoulder Width: {metadata?.shoulder}</p>
+                  <p>Shoe Size: {metadata?.shoe}</p>
+                  <p>Booking Date: {metadata?.date}</p>
+                </div>
+            </div>
+          )}
+          {paymentStatus === "failed" && (
+            <div className="text-red-500 text-lg">❌ Payment Failed</div>
+          )}
+          {paymentStatus === "not_found" && (
+            <div className="text-yellow-500 text-lg">⚠️ Payment Not Found</div>
+          )}
+          {paymentStatus === "error" && (
+            <div className="text-red-500 text-lg">❌ Error Checking Payment</div>
+          )}
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+      )}
     </div>
   );
 }
