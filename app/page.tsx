@@ -17,7 +17,7 @@ interface Metadata {
   leg: string;
   shoulder: string;
   shoe: string;
-  date: string;
+  bookingDate: string;
 }
 
 export default function Home() {
@@ -100,7 +100,7 @@ export default function Home() {
                   <p>Leg Length: {metadata?.leg}</p>
                   <p>Shoulder Width: {metadata?.shoulder}</p>
                   <p>Shoe Size: {metadata?.shoe}</p>
-                  <p>Booking Date: {metadata?.date}</p>
+                  <p>Booking Date: {metadata?.bookingDate}</p>
                 </div>
             </div>
           )}
