@@ -5,12 +5,12 @@ import { collection } from "firebase/firestore";
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyDAQVliBL_6zfck4lEIwh8llKm73dKlseI",
-  authDomain: "ags-website-dc96a.firebaseapp.com",
-  projectId: "ags-website-dc96a",
-  storageBucket: "ags-website-dc96a.appspot.com", // Fixed typo: .app -> .appspot.com
-  messagingSenderId: "366485809791",
-  appId: "1:366485809791:web:4aec115ceb934aa06d2d4a",
+  apiKey: "AIzaSyDdDLXV2wtIHthxq63cGqcwFP5mZ_VXQ1g",
+  authDomain: "website-d40d6.firebaseapp.com",
+  projectId: "website-d40d6",
+  storageBucket: "website-d40d6.firebasestorage.app", // Fixed typo: .app -> .appspot.com
+  messagingSenderId: "108939969443",
+  appId: "1:108939969443:web:b3c2eb8e8caf09cf731016",
 };
 
 // Initialize Firebase

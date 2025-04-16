@@ -56,34 +56,46 @@ export default function Bookings() {
   }, []);
 
   return (
-    <div className="min-h-screen flex flex-col items-center bg-gray-800 p-6 text-white">
-        <img src={logo.src} alt="" className="h-20"/>
-      <h1 className="text-2xl font-bold mb-4 py-10">Successful Bookings</h1>
-      {loading ? (
-        <p>Loading...</p>
-      ) : successfulPayments.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-10">
-          {successfulPayments.map(({ id, metadata }) => (
-            <div key={id} className="bg-gray-700 p-4 rounded-lg">
-              <h2 className="text-lg font-bold">Payment ID: {id}</h2>
-              <p>First Name: {metadata.firstName}</p>
-              <p>Last Name: {metadata.lastName}</p>
-              <p>Height: {metadata.height}</p>
-              <p>Weight: {metadata.weight}</p>
-              <p>Age: {metadata.age}</p>
-              <p>Head Circumference: {metadata.head}</p>
-              <p>Waist Circumference: {metadata.waist}</p>
-              <p>Thigh Circumference: {metadata.thigh}</p>
-              <p>Leg Length: {metadata.leg}</p>
-              <p>Shoulder Width: {metadata.shoulder}</p>
-              <p>Shoe Size: {metadata.shoe}</p>
-              <p>Booking Date: {metadata.bookingDate}</p>
-            </div>
-          ))}
-        </div>
-      ) : (
-        <p>No successful bookings found.</p>
-      )}
+    <div className="min-h-screen bg-gray-950 text-white px-6 py-12 font-sans">
+      <div className="max-w-7xl mx-auto flex flex-col items-center">
+        <img src={logo.src} alt="Logo" className="h-24 mb-8 drop-shadow-lg" />
+        <h1 className="text-4xl font-extrabold tracking-tight mb-12 text-center">
+          Successful Bookings
+        </h1>
+
+        {loading ? (
+          <p className="text-lg text-gray-400 animate-pulse">Loading...</p>
+        ) : successfulPayments.length > 0 ? (
+          <div className="grid gap-10 grid-cols-1 md:grid-cols-2 xl:grid-cols-3 w-full">
+            {successfulPayments.map(({ id, metadata }) => (
+              <div
+                key={id}
+                className="bg-gray-900 p-6 rounded-2xl shadow-xl transition hover:scale-[1.02] duration-300 border border-gray-800"
+              >
+                <h2 className="text-xl font-semibold mb-4 text-white/90">
+                  Payment ID: <span className="text-white/70">{id}</span>
+                </h2>
+                <div className="text-sm space-y-1 text-gray-300 leading-6">
+                  <p><strong>First Name:</strong> {metadata.firstName}</p>
+                  <p><strong>Last Name:</strong> {metadata.lastName}</p>
+                  <p><strong>Age:</strong> {metadata.age}</p>
+                  <p><strong>Height:</strong> {metadata.height}</p>
+                  <p><strong>Weight:</strong> {metadata.weight}</p>
+                  <p><strong>Head Circumference:</strong> {metadata.head}</p>
+                  <p><strong>Waist:</strong> {metadata.waist}</p>
+                  <p><strong>Thigh:</strong> {metadata.thigh}</p>
+                  <p><strong>Leg Length:</strong> {metadata.leg}</p>
+                  <p><strong>Shoulder Width:</strong> {metadata.shoulder}</p>
+                  <p><strong>Shoe Size:</strong> {metadata.shoe}</p>
+                  <p><strong>Booking Date:</strong> {metadata.bookingDate}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-gray-400">No successful bookings found.</p>
+        )}
+      </div>
     </div>
   );
 }
