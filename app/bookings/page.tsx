@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { db } from "@/firebase";
 import { collection, getDocs } from "firebase/firestore";
-import logo from '@/public/images/AGSWhiteLogo.png'
+import logo from '@/public/images/AGSWhiteLogo.png';
 
 interface Metadata {
   firstName: string;
@@ -20,8 +20,25 @@ interface Metadata {
   bookingDate: string;
 }
 
+interface StripeItem {
+  description: string;
+  quantity: number;
+  price: {
+    unit_amount: number;
+    currency: string;
+    nickname?: string;
+  };
+}
+
+interface Payment {
+  id: string;
+  metadata: Metadata;
+  items?: StripeItem[];
+  email?: string;
+}
+
 export default function Bookings() {
-  const [successfulPayments, setSuccessfulPayments] = useState<{ id: string; metadata: Metadata }[]>([]);
+  const [successfulPayments, setSuccessfulPayments] = useState<Payment[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -29,7 +46,7 @@ export default function Bookings() {
       try {
         const customersRef = collection(db, "customers");
         const customersSnapshot = await getDocs(customersRef);
-        const paymentsList: { id: string; metadata: Metadata }[] = [];
+        const paymentsList: Payment[] = [];
 
         for (const customerDoc of customersSnapshot.docs) {
           const customerID = customerDoc.id;
@@ -39,7 +56,15 @@ export default function Bookings() {
           paymentsSnapshot.docs.forEach((doc) => {
             const paymentData = doc.data();
             if (paymentData.status === "succeeded") {
-              paymentsList.push({ id: doc.id, metadata: paymentData.metadata as Metadata });
+              const email = paymentData.charges?.data?.[0]?.billing_details?.email || "";
+
+              const payment: Payment = {
+                id: doc.id,
+                metadata: paymentData.metadata as Metadata,
+                items: paymentData.items || [],
+                email,
+              };
+              paymentsList.push(payment);
             }
           });
         }
@@ -67,7 +92,7 @@ export default function Bookings() {
           <p className="text-lg text-gray-400 animate-pulse">Loading...</p>
         ) : successfulPayments.length > 0 ? (
           <div className="grid gap-10 grid-cols-1 md:grid-cols-2 xl:grid-cols-3 w-full">
-            {successfulPayments.map(({ id, metadata }) => (
+            {successfulPayments.map(({ id, metadata, items, email }) => (
               <div
                 key={id}
                 className="bg-gray-900 p-6 rounded-2xl shadow-xl transition hover:scale-[1.02] duration-300 border border-gray-800"
@@ -78,6 +103,7 @@ export default function Bookings() {
                 <div className="text-sm space-y-1 text-gray-300 leading-6">
                   <p><strong>First Name:</strong> {metadata.firstName}</p>
                   <p><strong>Last Name:</strong> {metadata.lastName}</p>
+                  {email && <p><strong>Email:</strong> {email}</p>}
                   <p><strong>Age:</strong> {metadata.age}</p>
                   <p><strong>Height:</strong> {metadata.height}</p>
                   <p><strong>Weight:</strong> {metadata.weight}</p>
@@ -89,6 +115,28 @@ export default function Bookings() {
                   <p><strong>Shoe Size:</strong> {metadata.shoe}</p>
                   <p><strong>Booking Date:</strong> {metadata.bookingDate}</p>
                 </div>
+
+                {items && items.length > 0 && (
+                  <div className="mt-4 text-sm text-gray-200">
+                    <h3 className="font-semibold mb-1">Items:</h3>
+                    <ul className="list-disc list-inside space-y-1">
+                      {items.map((item, index) => (
+                        <li key={index}>{item.description}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {email && (
+                  <div className="mt-6">
+                    <a
+                      href={`mailto:${email}?subject=Regarding Your Booking&body=Hi ${metadata.firstName},%0D%0A%0D%0AThank you for your booking!`}
+                      className="inline-block bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl text-sm font-semibold transition"
+                    >
+                      Email Customer
+                    </a>
+                  </div>
+                )}
               </div>
             ))}
           </div>
